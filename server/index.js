@@ -14,7 +14,7 @@ app.use(
 );
 
 app.get("/api/products", (c) => {
-  return c.json(JSON.stringify(products));
+  return c.json(products);
 });
 
 app.get("/api/health", (c) => {

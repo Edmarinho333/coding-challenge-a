@@ -11,10 +11,58 @@ import { useEffect, useState } from "react";
  */
 export default function App() {
   const [products, setProducts] = useState([]);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
+const [error, setError] = useState(null);
+const [loading, setLoading] = useState(true);
+const [filter, setFilter] = useState("");
 
   /* TODO: replace this stub with a real fetch to /api/products */
+
+  useEffect(() => {
+  async function loadProducts() {
+    try {
+      const response = await fetch("/api/products");
+
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      setProducts(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadProducts();
+}, []);
+
+const filteredProducts = products.filter((product) => {
+  const searchText = filter.toLowerCase();
+
+  return (
+    product.name.toLowerCase().includes(searchText) ||
+    product.category.toLowerCase().includes(searchText)
+  );
+});
+
+function handleEdit(product) {
+  const newName = window.prompt("Enter a new product name:", product.name);
+
+  if (!newName || newName.trim() === "") {
+    return;
+  }
+
+  setProducts((currentProducts) =>
+    currentProducts.map((item) =>
+      item.id === product.id
+        ? { ...item, name: newName.trim() }
+        : item
+    )
+  );
+}
+
 
   return (
     <div className="app">
@@ -25,8 +73,13 @@ export default function App() {
 
       {/* TODO: add a filter input that filters products locally */}
       <section className="controls">
-        <p className="hint">Filter control goes here</p>
-      </section>
+  <input
+    type="text"
+    placeholder="Filter by name or category"
+    value={filter}
+    onChange={(event) => setFilter(event.target.value)}
+  />
+</section>
 
       <section className="list-section">
         {loading && <p>Loading products…</p>}
@@ -42,17 +95,28 @@ export default function App() {
         {/* TODO: map over (filtered) products and render each row */}
         {/* TODO: add an edit affordance per row and update local state on save */}
         <ul className="product-list">
-          {/* Example row shape for reference — remove once you render real data */}
-          <li className="product-row example">
-            <span className="product-name">Example Product</span>
-            <span className="product-category">Category</span>
-            <span className="product-price">$0.00</span>
-            <span className="product-stock">In stock</span>
-            <button type="button" disabled>
-              Edit
-            </button>
-          </li>
-        </ul>
+  {filteredProducts.map((product) => (
+    <li key={product.id} className="product-row">
+      <span className="product-name">{product.name}</span>
+
+      <span className="product-category">
+        {product.category}
+      </span>
+
+      <span className="product-price">
+        ${product.price.toFixed(2)}
+      </span>
+
+      <span className="product-stock">
+        {product.inStock ? "In stock" : "Out of stock"}
+      </span>
+
+      <button type="button" onClick={() => handleEdit(product)}>
+  Edit
+</button>
+    </li>
+  ))}
+</ul>
       </section>
     </div>
   );
